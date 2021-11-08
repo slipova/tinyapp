@@ -24,6 +24,12 @@ app.get("/hello", (req, res) => {
 });
 
 
+app.get("/urls", (req, res) => {
+  // store variables in on object to be able to refer to them in the file - urls_index in this case
+  const templateVars = { urls: urlDatabase, name: "Sofiya" };
+  res.render("urls_index", templateVars);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
