@@ -57,7 +57,7 @@ app.post("/urls", (req, res) => {
   //   }
   // }
   urlDatabase[short] = req.body.longURL;
-  res.render("urls_show", { shortURL: short, longURL: long })
+  res.render("urls_show", { shortURL: short, longURL: long });
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -70,6 +70,6 @@ app.listen(PORT, () => {
 });
 
 //Generate a random short name for the link
-function generateRandomString() {
+const generateRandomString = () => {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 };
