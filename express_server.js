@@ -44,6 +44,7 @@ app.get("/urls/:shortURL", (req, res) => {//longURL?
   res.render("urls_show", templateVars);
 });
 
+//create a random shortURL
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   let long = req.body.longURL;
@@ -51,10 +52,27 @@ app.post("/urls", (req, res) => {
   res.render("urls_show", { shortURL: short, longURL: long });
 });
 
-app.get("/u/:shortURL", (req, res) => {
+//urls_show
+app.get("/u/:shortURL", (req, res) => { //displaying new page
+  console.log('req.params', req.params);
   const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    // res.redirect("/urls");
+
+    return res.send('<p>This URL does not exist</p>');
+  }
+
 });
+
+//deleting a key-value pair   DOESNT WORK
+app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
+  const urlToDelete = req.params.shortURL;
+  console.log(urlToDelete)
+  delete urlDatabase[urlToDelete];
+  res.redirect("/urls");
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
