@@ -4,7 +4,11 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.set("view engine", "ejs");
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -26,12 +30,17 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   // store variables in on object to be able to refer to them in the file - urls_index in this case
-  const templateVars = { urls: urlDatabase, name: "Sofiya" };
+  const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase.shortURL };
+//place before  app.get("/urls/:id", ...) ORDER MATTERS
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
+app.get("/urls/:shortURL", (req, res) => {//longURL?
+  const templateVars = { shortURL: req.params.shortURL, longURL: req.body.longURL };
   res.render("urls_show", templateVars);
 });
 
