@@ -45,11 +45,15 @@ app.get("/urls/:shortURL", (req, res) => {//longURL?
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  console.log(req.body); //to log the POST request body
+  res.send("Ok"); //responds with ok
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+//Generate a random short name for the link
+function generateRandomString() {
+  return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
+};
