@@ -19,6 +19,13 @@
       <p class="card-text">Short URL: <a href="/u/<%= shortURL %>">
           <%= shortURL %>
         </a></p>
+      <form method="POST" action="/urls/<%= shortURL %>">
+        <!-- submit button creates a post request and sends it to app.post(/urls/:id) -->
+        <h3>Edit link</h3>
+        <label for="newurl">New URL: </label>
+        <input type="text" name="newurl" id="newurl">
+        <button type="submit" name="submit" id="submit">Submit</button>
+      </form>
     </div>
     <div class="card-footer text-muted"></div>
   </div>
@@ -35,7 +42,3 @@
 </body>
 
 </html>
-
-
-
-<!-- object.values    array of keys. index of longurl -->

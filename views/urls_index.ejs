@@ -22,6 +22,7 @@
         <tr>
           <th scope="col">Short URL</th>
           <th scope="col">Long URL</th>
+          <th scope="col">Edit</th>
           <th scope="col">Delete</th>
         </tr>
       </thead>
@@ -33,6 +34,12 @@
             </td>
             <td>
               <%= urls[url] %>
+            </td>
+            <td>
+              <!-- uses get option because redirects to urls_show to edit were it will use post method -->
+              <form method="GET" action="/urls/<%= url %>">
+                <button type="submit" name="edit" id="edit" value="edit">EDIT</button>
+              </form>
             </td>
             <td>
               <form method="POST" action="/urls/<%= url %>/delete">

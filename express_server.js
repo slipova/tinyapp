@@ -52,7 +52,7 @@ app.post("/urls", (req, res) => {
   res.render("urls_show", { shortURL: short, longURL: long });
 });
 
-//urls_show
+//urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL) {
@@ -62,8 +62,18 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
 
     return res.send('<p>This URL does not exist</p>');
   }
-
 });
+
+//submit form from Tiny page
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const newURL = req.body.newurl; //name is important
+  urlDatabase[shortURL] = newURL;
+  // console.log(req.body.newurl);
+  res.redirect("/urls")
+  // const urlToEdit = document.querySelector("newurl");
+  // console.log(urlToEdit);
+})
 
 //deleting a key-value pair from database
 app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
