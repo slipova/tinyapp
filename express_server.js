@@ -47,15 +47,6 @@ app.get("/urls/:shortURL", (req, res) => {//longURL?
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   let long = req.body.longURL;
-
-  // for (let key1 in urlDatabase) {
-  //   if (urlDatabase[key1] === urlDatabase[short]) {
-  //     longURL =
-  //       res.render("urls_show", { shortURL: key1, longURL: urlDatabase[key1] });
-  //   } else if (key1 === short) {
-  //     short = generateRandomString();
-  //   }
-  // }
   urlDatabase[short] = req.body.longURL;
   res.render("urls_show", { shortURL: short, longURL: long });
 });
