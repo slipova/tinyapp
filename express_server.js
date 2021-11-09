@@ -54,7 +54,6 @@ app.post("/urls", (req, res) => {
 
 //urls_show
 app.get("/u/:shortURL", (req, res) => { //displaying new page
-  console.log('req.params', req.params);
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL) {
     res.redirect(longURL);
@@ -66,10 +65,10 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
 
 });
 
-//deleting a key-value pair   DOESNT WORK
+//deleting a key-value pair from database
 app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
   const urlToDelete = req.params.shortURL;
-  console.log(urlToDelete)
+  //access the object
   delete urlDatabase[urlToDelete];
   res.redirect("/urls");
 })
