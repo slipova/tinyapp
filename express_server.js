@@ -9,11 +9,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+
+//----------------for pages that use a header-----//
+
+
+//------------------------------------------------//
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -30,18 +39,23 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   // store variables in on object to be able to refer to them in the file - urls_index in this case
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
 //place before  app.get("/urls/:id", ...) ORDER MATTERS
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("urls_new", templateVars);
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 });
 
 app.get("/urls/:shortURL", (req, res) => {//longURL?
-  const templateVars = { shortURL: req.params.shortURL, longURL: req.body.longURL };
+  const templateVars = { shortURL: req.params.shortURL, longURL: req.body.longURL, username: req.cookies["username"] };
   res.render("urls_show", templateVars);
+
 });
 
 //create a random shortURL
@@ -49,7 +63,9 @@ app.post("/urls", (req, res) => {
   let short = generateRandomString();
   let long = req.body.longURL;
   urlDatabase[short] = req.body.longURL;
-  res.render("urls_show", { shortURL: short, longURL: long });
+  res.render("urls_show", { shortURL: short, longURL: long, username: req.cookies["username"] });
+
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 });
 
 //urls_show file uses the path
@@ -58,10 +74,26 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
   if (longURL) {
     res.redirect(longURL);
   } else {
-    // res.redirect("/urls");
-
+    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
     return res.send('<p>This URL does not exist</p>');
   }
+});
+
+//login post request COOKIES--------Also tried with 'get'
+app.post("/login", (req, res) => {
+  //set a cookie named username to the value submitted in the request body via the login form
+  const username = req.body.username;
+  console.log(req.body);
+  res.cookie("username", username);
+  console.log(username);
+
+  //redirect back to /urls page
+  res.redirect("/urls");
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("urls_index", templateVars);
 });
 
 //submit form from Tiny page
@@ -69,11 +101,9 @@ app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const newURL = req.body.newurl; //name is important
   urlDatabase[shortURL] = newURL;
-  // console.log(req.body.newurl);
   res.redirect("/urls")
-  // const urlToEdit = document.querySelector("newurl");
-  // console.log(urlToEdit);
-})
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+});
 
 //deleting a key-value pair from database
 app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
@@ -81,7 +111,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
   //access the object
   delete urlDatabase[urlToDelete];
   res.redirect("/urls");
-})
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
+});
+
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
