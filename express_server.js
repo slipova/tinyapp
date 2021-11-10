@@ -56,25 +56,28 @@ app.get("/hello", (req, res) => {
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 
-app.get("/urls", (req, res) => {
+app.get("/urls", (req, res) => {          //USER_ID
   // store variables in on object to be able to refer to them in the file - urls_index in this case
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const username = req.cookies["username"];
+  const userObj = users[username];
+  const userEmail = userObj ? userObj.email : null;
+  const templateVars = { urls: urlDatabase, userEmail: userEmail };
   res.render("urls_index", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//place before  app.get("/urls/:id", ...) ORDER MATTERS
+//place before  app.get("/urls/:id", ...) ORDER MATTERS       ///USER_ID
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    username: users["id"],
   };
   res.render("urls_new", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //new URL
-app.get("/urls/:shortURL", (req, res) => {//longURL?
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+app.get("/urls/:shortURL", (req, res) => {//longURL?     ////USER_ID
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: users["id"] };
   console.log(templateVars);
   res.render("urls_show", templateVars);
 });
@@ -107,13 +110,15 @@ app.post("/login", (req, res) => {
   //set a cookie named username to the value submitted in the request body via the login form
   const username = req.body.username;
   // console.log(req.body);
-  res.cookie("username", username);
+  if (users[username]) {
+    res.cookie("username", username);
+  }
   // console.log(username);
   res.redirect("/urls");
 
   //-----pass username----//
-  const templateVars = {
-    username: req.cookies["username"],
+  const templateVars = {          //USER_ID
+    username: users["id"],
   };
   res.render("urls_index", templateVars);
 });
