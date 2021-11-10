@@ -19,9 +19,6 @@ const urlDatabase = {
 };
 
 
-//----------------for pages that use a header-----//
-
-
 //------------------------------------------------//
 
 app.get("/", (req, res) => {
@@ -49,24 +46,25 @@ app.get("/urls/new", (req, res) => {
     username: req.cookies["username"],
   };
   res.render("urls_new", templateVars);
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 });
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
+//new URL
 app.get("/urls/:shortURL", (req, res) => {//longURL?
-  const templateVars = { shortURL: req.params.shortURL, longURL: req.body.longURL, username: req.cookies["username"] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  console.log(templateVars);
   res.render("urls_show", templateVars);
-
 });
 
-//create a random shortURL
+//create a random shortURL------CHECK send above?
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   let long = req.body.longURL;
   urlDatabase[short] = req.body.longURL;
-  res.render("urls_show", { shortURL: short, longURL: long, username: req.cookies["username"] });
-
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+  // res.render("urls_show", { shortURL: short, longURL: long, username: req.cookies["username"] });
+  res.redirect(`/urls/${short}`);
 });
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
@@ -79,22 +77,22 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
   }
 });
 
-//login post request COOKIES--------Also tried with 'get'
+//login post request COOKIES
 app.post("/login", (req, res) => {
   //set a cookie named username to the value submitted in the request body via the login form
   const username = req.body.username;
-  console.log(req.body);
+  // console.log(req.body);
   res.cookie("username", username);
-  console.log(username);
-
-  //redirect back to /urls page
+  // console.log(username);
   res.redirect("/urls");
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+
+  //-----pass username-------//
   const templateVars = {
     username: req.cookies["username"],
   };
   res.render("urls_index", templateVars);
 });
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //submit form from Tiny page
 app.post("/urls/:shortURL", (req, res) => {
@@ -102,8 +100,8 @@ app.post("/urls/:shortURL", (req, res) => {
   const newURL = req.body.newurl; //name is important
   urlDatabase[shortURL] = newURL;
   res.redirect("/urls")
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 });
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //deleting a key-value pair from database
 app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
@@ -111,9 +109,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
   //access the object
   delete urlDatabase[urlToDelete];
   res.redirect("/urls");
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 });
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
+//logout NOT WORKING
+app.post("/logout", (req, res) => {  //handling request
+
+  res.clearCookie("username");
+  res.redirect("/urls");
+
+});
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
 
 
