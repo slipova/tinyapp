@@ -10,6 +10,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 const cookieParser = require("cookie-parser");
+const e = require("express");
 app.use(cookieParser());
 
 ////////////-+-+-+-+-+-+-+//////////////
@@ -62,7 +63,6 @@ app.get("/urls", (req, res) => {          //USER_ID
   const userObj = users[username];
   const userEmail = userObj ? userObj.email : null;
   const templateVars = { urls: urlDatabase, user: userObj };
-  console.log(templateVars.urls);
   res.render("urls_index", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -79,7 +79,6 @@ app.get("/urls/new", (req, res) => {
 //new URL
 app.get("/urls/:shortURL", (req, res) => {//longURL?     ////USER_ID
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["userID"]] };
-  console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -114,15 +113,6 @@ app.post("/login", (req, res) => {
     res.cookie("userID", username);
   };
   res.redirect("/urls");
-
-  //-----pass username----//
-  const templateVars = {          //USER_ID
-    // username: users["id"],
-    user: users[req.cookies["userID"]],
-    urls: urlDatabase,
-  };
-  // const templateVars = {  };
-  res.render("urls_index", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
@@ -168,17 +158,35 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   //console.log(req.body); { email: 'sdc@jvbj', password: 'sdcfsdf', register: '' }
   const { email, password } = req.body;
-  const userID = 'user' + generateRandomString();
 
-  users[userID] = { id: userID, email, password };
+  if (email.length === 0 || password.length === 0) {
+    return res.status(400).send('Bad Request');
+  }
+  if (!checkExistingEmails(email)) {
+    return res.status(400).send('Bad Request');
+  } else {
+    const userID = 'user' + generateRandomString();
+    users[userID] = { id: userID, email, password };
+    //creates a cookie:
+    res.cookie('userID', userID);
+    res.redirect("/urls");
+  }
   console.log(users)
-  //creates a cookie:
-  res.cookie('userID', userID);
-  res.redirect("/urls");
 });
 
 
 
+//////HELPER FUNCTION/////////////
+const checkExistingEmails = (newEmail) => {
+  for (let key in users) {
+
+    let userEmail = users[key]["email"];
+    if (userEmail === newEmail) {
+      return false;
+    };
+  }
+  return true;
+};
 
 
 
