@@ -114,6 +114,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
 
 //logout NOT WORKING
 app.post("/logout", (req, res) => {  //handling request
+  // const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  // res.render("urls_index", templateVars);
 
   res.clearCookie("username");
   res.redirect("/urls");
