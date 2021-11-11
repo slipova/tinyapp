@@ -17,10 +17,24 @@ app.use(cookieParser());
 //           URL DATABASE             //
 ////////////-+-+-+-+-+-+-+//////////////
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
+
+
 
 ////////////-+-+-+-+-+-+-+//////////////
 //           USER DATABASE            //
@@ -30,7 +44,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "1234"
   },
   "user2RandomID": {
     id: "user2RandomID",
@@ -54,14 +68,12 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></html>\n");
 });
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
-
-
+//=-=-=-=-=-=-=-=-=-=-=-=-
 app.get("/urls", (req, res) => {          //USER_ID
-  // store variables in on object to be able to refer to them in the file - urls_index in this case
+  // store variables in an object to be able to refer to them in the file - urls_index in this case
+
   const userID = req.cookies["userID"];
   const userObj = users[userID];
-  const userEmail = userObj ? userObj.email : null;
   const templateVars = { urls: urlDatabase, user: userObj };
   res.render("urls_index", templateVars);
 });
@@ -69,6 +81,9 @@ app.get("/urls", (req, res) => {          //USER_ID
 
 //place before  app.get("/urls/:id", ...) ORDER MATTERS       ///USER_ID
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["userID"]) {
+    return res.redirect("/login");
+  }
   const templateVars = {
     user: users[req.cookies["userID"]],
   };
@@ -77,25 +92,34 @@ app.get("/urls/new", (req, res) => {
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //new URL
-app.get("/urls/:shortURL", (req, res) => {//longURL?     ////USER_ID
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["userID"]] };
+app.get("/urls/:shortURL", (req, res) => {//longURL?   
+
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    user: users[req.cookies["userID"]]
+  };
+
   res.render("urls_show", templateVars);
 });
+
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//create a random shortURL------CHECK send above?
+//create a random shortURL
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
-  // let long = req.body.longURL;
-  urlDatabase[short] = req.body.longURL;
-  // res.render("urls_show", { shortURL: short, longURL: long, username: req.cookies["username"] });
+  let long = req.body.longURL;
+  urlDatabase[short] = { longURL: long, userID: "" }
   res.redirect(`/urls/${short}`);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
-  const longURL = urlDatabase[req.params.shortURL];
+  if (urlDatabase[req.params.shortURL])
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+
   if (longURL) {
     res.redirect(longURL);
   } else {
@@ -109,6 +133,10 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
 
 app.post("/login", (req, res) => {
   //set a cookie named username to the value submitted in the request body via the login form
+  if (req.cookies["userID"]) {
+    return res.redirect("/urls");
+  }
+
   const enteredEmail = req.body.emailaddress;
   const enteredPassword = req.body.password;
   console.log(enteredEmail) //success
@@ -120,21 +148,20 @@ app.post("/login", (req, res) => {
   }
 
   res.cookie("userID", userID);
-
   res.redirect("/urls");
 });
 
 
 
-
-
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+
 
 //submit form from Tiny page
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  console.log(shortURL); //9b4817
   const newURL = req.body.newurl; //name is important
-  urlDatabase[shortURL] = newURL;
+  urlDatabase[shortURL] = { longURL: newURL, id: "" };
   res.redirect("/urls");
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -163,14 +190,21 @@ app.post("/logout", (req, res) => {  //handling request
 
 //render registration page
 app.get("/register", (req, res) => {
-  res.render("register");
+  if (req.cookies["userID"]) {
+    return res.redirect("/urls");
+  }
+  const templateVars = {
+    user: users[req.cookies["userID"]],
+  };
+
+  res.render("register", templateVars);
 });
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
 //post the REGISTRATION form MAKE SURE IT'S 'REGISTER' NOT 'REGISTRATION'
 app.post("/register", (req, res) => {
-  //console.log(req.body); { email: 'sdc@jvbj', password: 'sdcfsdf', register: '' }
+
   const { email, password } = req.body;
 
   if (email.length === 0 || password.length === 0) {
@@ -185,10 +219,23 @@ app.post("/register", (req, res) => {
     res.cookie('userID', userID);
     res.redirect("/urls");
   }
-  console.log(users)
+
 });
 
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
+
+app.get("/login", (req, res) => {
+  if (req.cookies["userID"]) {
+    return res.redirect("/urls");
+  }
+  const templateVars = {
+    user: users[req.cookies["userID"]],
+  };
+
+  res.render("login", templateVars);
+
+});
 
 //////HELPER FUNCTION/////////////
 
@@ -199,7 +246,7 @@ const checkEmailsMatch = (checkEmail, enteredPassword) => {
     let existingEmail = users[key]["email"];
     let existingPassword = users[key]["password"];
 
-    console.log(existingEmail);
+
 
     if (existingEmail === checkEmail) {
       if (enteredPassword === null) {
@@ -215,10 +262,6 @@ const checkEmailsMatch = (checkEmail, enteredPassword) => {
 
 
 
-
-app.get("/login", (req, res) => {
-  res.render("login");
-});
 
 
 
