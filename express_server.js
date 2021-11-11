@@ -59,8 +59,8 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {          //USER_ID
   // store variables in on object to be able to refer to them in the file - urls_index in this case
-  const username = req.cookies["userID"];
-  const userObj = users[username];
+  const userID = req.cookies["userID"];
+  const userObj = users[userID];
   const userEmail = userObj ? userObj.email : null;
   const templateVars = { urls: urlDatabase, user: userObj };
   res.render("urls_index", templateVars);
@@ -105,15 +105,29 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//login post request COOKIES
+
+
 app.post("/login", (req, res) => {
   //set a cookie named username to the value submitted in the request body via the login form
-  const username = req.body.username;
-  if (users[username]) {
-    res.cookie("userID", username);
-  };
+  const enteredEmail = req.body.emailaddress;
+  const enteredPassword = req.body.password;
+  console.log(enteredEmail) //success
+  console.log(enteredPassword) //success
+  let userID = checkEmailsMatch(enteredEmail, enteredPassword)
+
+  if (!userID) {
+    return res.status(400).send('Bad Request');
+  }
+
+  res.cookie("userID", userID);
+
   res.redirect("/urls");
 });
+
+
+
+
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //submit form from Tiny page
@@ -162,7 +176,7 @@ app.post("/register", (req, res) => {
   if (email.length === 0 || password.length === 0) {
     return res.status(400).send('Bad Request');
   }
-  if (!checkExistingEmails(email)) {
+  if (checkEmailsMatch(email, null)) {
     return res.status(400).send('Bad Request');
   } else {
     const userID = 'user' + generateRandomString();
@@ -177,16 +191,30 @@ app.post("/register", (req, res) => {
 
 
 //////HELPER FUNCTION/////////////
-const checkExistingEmails = (newEmail) => {
+
+//RETURNS FALSE IF MATCH FOUND
+const checkEmailsMatch = (checkEmail, enteredPassword) => {
   for (let key in users) {
 
-    let userEmail = users[key]["email"];
-    if (userEmail === newEmail) {
-      return false;
+    let existingEmail = users[key]["email"];
+    let existingPassword = users[key]["password"];
+
+    console.log(existingEmail);
+
+    if (existingEmail === checkEmail) {
+      if (enteredPassword === null) {
+        return true;
+      }
+      if (existingPassword === enteredPassword) {
+        return key;
+      }
     };
   }
-  return true;
 };
+
+
+
+
 
 app.get("/login", (req, res) => {
   res.render("login");
