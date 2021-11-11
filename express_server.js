@@ -188,7 +188,9 @@ const checkExistingEmails = (newEmail) => {
   return true;
 };
 
-
+app.get("/login", (req, res) => {
+  res.render("login");
+});
 
 
 
