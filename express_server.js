@@ -69,10 +69,10 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></html>\n");
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-
-app.get("/urls", (req, res) => {          //USER_ID
+app.get("/urls", (req, res) => {
   // store variables in an object to be able to refer to them in the file - urls_index in this case
-
-  const userID = req.cookies["userID"];
+  console.log("THIS IS /URLS - GET")
+  const userID = req.cookies["userID"]; //??? is it useful?
   const userObj = users[userID];
   const templateVars = { urls: urlDatabase, user: userObj };
   res.render("urls_index", templateVars);
@@ -81,6 +81,7 @@ app.get("/urls", (req, res) => {          //USER_ID
 
 //place before  app.get("/urls/:id", ...) ORDER MATTERS       ///USER_ID
 app.get("/urls/new", (req, res) => {
+  console.log("THIS IS /URLS/NEW - GET")
   if (!req.cookies["userID"]) {
     return res.redirect("/login");
   }
@@ -93,7 +94,7 @@ app.get("/urls/new", (req, res) => {
 
 //new URL
 app.get("/urls/:shortURL", (req, res) => {//longURL?   
-
+  console.log("THIS IS /URLS/SHORT - GET")
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
@@ -108,24 +109,27 @@ app.get("/urls/:shortURL", (req, res) => {//longURL?
 
 //create a random shortURL
 app.post("/urls", (req, res) => {
+  console.log("THIS IS /URLS - POST")
   let short = generateRandomString();
-  let long = req.body.longURL;
-  urlDatabase[short] = { longURL: long, userID: "" }
+  let long = req.body.longURL;    // http://www.google.com confirmed
+  urlDatabase[short] = { longURL: long, userID: "" }  //{ longURL: 'http://www.google.com', userID: '' }
   res.redirect(`/urls/${short}`);
 });
+
+
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
-  if (urlDatabase[req.params.shortURL])
-    const longURL = urlDatabase[req.params.shortURL].longURL;
-
-  if (longURL) {
-    res.redirect(longURL);
-  } else {
-    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+  console.log("THIS IS /U/SHORT")
+  if (urlDatabase[req.params.shortURL] === undefined) {
     return res.send('<p>This URL does not exist</p>');
   }
+
+  let longURL = urlDatabase[req.params.shortURL]["longURL"];
+  res.redirect(longURL);
+
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
@@ -158,10 +162,14 @@ app.post("/login", (req, res) => {
 
 //submit form from Tiny page
 app.post("/urls/:shortURL", (req, res) => {
+  console.log("THIS IS URLS/SHORT - POST")
   const shortURL = req.params.shortURL;
-  console.log(shortURL); //9b4817
-  const newURL = req.body.newurl; //name is important
+  console.log(shortURL); //9b4817 returns short confirmed
+  const newURL = req.body.newurl; //name is important -----> newURL === long URL confirmed
+  // console.log("new url:", newURL)
   urlDatabase[shortURL] = { longURL: newURL, id: "" };
+  console.log("urlDatabase[shortURL", urlDatabase[shortURL]) // { longURL: 'www.google.com', id: '' }
+  console.log(urlDatabase);
   res.redirect("/urls");
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
