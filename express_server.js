@@ -5,13 +5,27 @@ const app = express();
 const PORT = 8080;
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
-
-app.set("view engine", "ejs");
-
 const cookieParser = require("cookie-parser");
 const e = require("express");
+const bcrypt = require("bcryptjs");
+
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+
+//////CALLBACK hash passwords////////
+//req.params[apssword]
+// const examplePass = "chgchgchgch";
+// const hashPassword = bcrypt.hashSync(examplePass, 10, (err, hash) => {
+//   console.log(hash);
+// })
+// hashPassword();
+
+// bcrypt.hash(password, 10, function(err, hash) {
+
+//   // Store hash in your password DB.
+// });
 
 ////////////-+-+-+-+-+-+-+//////////////
 //           URL DATABASE             //
@@ -50,13 +64,21 @@ const users = {
     password: "2345"
   }
 };
+//////////////////////////////////////////////////////
+///////////////-+-+-+-FUNCTIONS-+-+-+-////////////////
+//////////////////////////////////////////////////////
 
-//**********Function */
+//GENERATE a random short name for the link
+const generateRandomString = () => {
+  return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
+};
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+
+//RETURN an user's URLs in an object
 const urlsForUser = (id) => {
   //  urlDatabase ---> shortURL ----> id
-  console.log('THIS IS A FUNCTION')
+  console.log('THIS IS A FUNCTION');
   let userURLS = {};
-
 
   for (let shortURL in urlDatabase) {
     let user = urlDatabase[shortURL].userID;
@@ -65,17 +87,19 @@ const urlsForUser = (id) => {
       userURLS[shortURL] = urlDatabase[shortURL].longURL;
       console.log(userURLS[shortURL]);
     }
-
   }
   return userURLS;
 };
-//----------------------methods--------------------------//
+
+//------------------------------------------------------//
+//----------------------ROUTES--------------------------//
+//------------------------------------------------------//
 
 app.get("/", (req, res) => {
   if (req.cookies["userID"]) {
     res.redirect("/urls");
   }
-  res.redirect("/login")
+  res.redirect("/login");
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
@@ -90,21 +114,22 @@ app.get("/hello", (req, res) => {
 //=-=-=-=-=-=-=-=-=-=-=-=-
 app.get("/urls", (req, res) => {
   // store variables in an object to be able to refer to them in the file - urls_index in this case
-  console.log("THIS IS /URLS - GET")
+  console.log("THIS IS /URLS - GET");
   if (!req.cookies["userID"]) {
     return res.status(400).send("You are not logged in");
   }
   const userID = req.cookies["userID"]; //??? is it useful?
   const userObj = users[userID];
-  const urlUser = urlsForUser(userID)
+  const urlUser = urlsForUser(userID);
   const templateVars = { urls: urlUser, user: userObj };
   res.render("urls_index", templateVars);
+
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //place before  app.get("/urls/:id", ...) ORDER MATTERS       ///USER_ID
 app.get("/urls/new", (req, res) => {
-  console.log("THIS IS /URLS/NEW - GET")
+
   if (!req.cookies["userID"]) {
     return res.redirect("/login");
   }
@@ -112,12 +137,12 @@ app.get("/urls/new", (req, res) => {
     user: users[req.cookies["userID"]],
   };
   res.render("urls_new", templateVars);
+
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //new URL
-app.get("/urls/:shortURL", (req, res) => {//longURL?   
-  console.log("THIS IS /URLS/SHORT - GET")
+app.get("/urls/:shortURL", (req, res) => {
   if (!req.cookies["userID"]) {
     return res.status(401).send('Please log in');
   }
@@ -128,41 +153,34 @@ app.get("/urls/:shortURL", (req, res) => {//longURL?
       longURL: urlDatabase[req.params.shortURL].longURL,
       user: users[req.cookies["userID"]]
     };
-
     return res.render("urls_show", templateVars);
   }
-
   return res.status(401).send('Unauthorized');
-
 });
-
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //create a random shortURL
 app.post("/urls", (req, res) => {
-  console.log("THIS IS /URLS - POST")
   let short = generateRandomString();
-  let long = req.body.longURL;    // http://www.google.com confirmed
-  urlDatabase[short] = { longURL: long, userID: req.cookies["userID"] }  //{ longURL: 'http://www.google.com', userID: '' }
+  let long = req.body.longURL;
+  urlDatabase[short] = { longURL: long, userID: req.cookies["userID"] };
   res.redirect(`/urls/${short}`);
 });
-
-
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
-  console.log("THIS IS /U/SHORT")
+
   if (urlDatabase[req.params.shortURL] === undefined) {
     return res.send('<p>This URL does not exist</p>');
   }
 
   let longURL = urlDatabase[req.params.shortURL]["longURL"];
   res.redirect(longURL);
-
 });
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 
@@ -175,9 +193,7 @@ app.post("/login", (req, res) => {
 
   const enteredEmail = req.body.emailaddress;
   const enteredPassword = req.body.password;
-  console.log(enteredEmail) //success
-  console.log(enteredPassword) //success
-  let userID = checkEmailsMatch(enteredEmail, enteredPassword)
+  let userID = checkEmailsMatch(enteredEmail, enteredPassword);
 
   if (!userID) {
     return res.status(400).send('Bad Request');
@@ -188,20 +204,15 @@ app.post("/login", (req, res) => {
 });
 
 
-
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
-
 
 //submit form from Tiny page
 app.post("/urls/:shortURL", (req, res) => {
-  console.log("THIS IS URLS/SHORT - POST")
+
   const shortURL = req.params.shortURL;
-  console.log(shortURL); //9b4817 returns short confirmed
-  const newURL = req.body.newurl; //name is important -----> newURL === long URL confirmed
-  // console.log("new url:", newURL)
+  const newURL = req.body.newurl; //name is important
+
   urlDatabase[shortURL].longURL = newURL;
-  console.log("urlDatabase[shortURL", urlDatabase[shortURL]) // { longURL: 'www.google.com', id: '' }
-  console.log(urlDatabase);
   res.redirect("/urls");
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -212,10 +223,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
   if (!req.cookies["userID"]) {
     return res.status(401).send('Please log in');
   }
-
   if (Object.keys(urlsForUser(req.cookies["userID"])).includes(req.params.shortURL)) {
     const urlToDelete = req.params.shortURL;
-    //access the object
+
     delete urlDatabase[urlToDelete];
     res.redirect("/urls");
   }
@@ -250,7 +260,7 @@ app.get("/register", (req, res) => {
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
-//post the REGISTRATION form MAKE SURE IT'S 'REGISTER' NOT 'REGISTRATION'
+//post the REGISTRATION
 app.post("/register", (req, res) => {
 
   const { email, password } = req.body;
@@ -263,11 +273,10 @@ app.post("/register", (req, res) => {
   } else {
     const userID = 'user' + generateRandomString();
     users[userID] = { id: userID, email, password };
-    //creates a cookie:
+
     res.cookie('userID', userID);
     res.redirect("/urls");
   }
-
 });
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
@@ -282,7 +291,6 @@ app.get("/login", (req, res) => {
   };
 
   res.render("login", templateVars);
-
 });
 
 //////HELPER FUNCTION/////////////
@@ -294,8 +302,6 @@ const checkEmailsMatch = (checkEmail, enteredPassword) => {
     let existingEmail = users[key]["email"];
     let existingPassword = users[key]["password"];
 
-
-
     if (existingEmail === checkEmail) {
       if (enteredPassword === null) {
         return true;
@@ -303,14 +309,9 @@ const checkEmailsMatch = (checkEmail, enteredPassword) => {
       if (existingPassword === enteredPassword) {
         return key;
       }
-    };
+    }
   }
 };
-
-
-
-
-
 
 
 ///////////////////////////////////
@@ -322,7 +323,4 @@ app.listen(PORT, () => {
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
-//GENERATE a random short name for the link
-const generateRandomString = () => {
-  return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
-};
+
