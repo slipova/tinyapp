@@ -17,20 +17,18 @@ app.use(cookieParser());
 //           URL DATABASE             //
 ////////////-+-+-+-+-+-+-+//////////////
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
-
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
+    userID: "userRandomID"
+  },
+  AAAxQ: {
+    longURL: "https://www.mmmmm.lo.tsn.ca",
+    userID: "user2RandomID"
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW"
+    userID: "userRandomID"
   }
 };
 
@@ -53,10 +51,31 @@ const users = {
   }
 };
 
+//**********Function */
+const urlsForUser = (id) => {
+  //  urlDatabase ---> shortURL ----> id
+  console.log('THIS IS A FUNCTION')
+  let userURLS = {};
+
+
+  for (let shortURL in urlDatabase) {
+    let user = urlDatabase[shortURL].userID;
+
+    if (user === id) {
+      userURLS[shortURL] = urlDatabase[shortURL].longURL;
+      console.log(userURLS[shortURL]);
+    }
+
+  }
+  return userURLS;
+};
 //----------------------methods--------------------------//
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.cookies["userID"]) {
+    res.redirect("/urls");
+  }
+  res.redirect("/login")
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
@@ -72,9 +91,13 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   // store variables in an object to be able to refer to them in the file - urls_index in this case
   console.log("THIS IS /URLS - GET")
+  if (!req.cookies["userID"]) {
+    res.status(400).send("You are not logged in");
+  }
   const userID = req.cookies["userID"]; //??? is it useful?
   const userObj = users[userID];
-  const templateVars = { urls: urlDatabase, user: userObj };
+  const urlUser = urlsForUser(userID)
+  const templateVars = { urls: urlUser, user: userObj };
   res.render("urls_index", templateVars);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -95,13 +118,22 @@ app.get("/urls/new", (req, res) => {
 //new URL
 app.get("/urls/:shortURL", (req, res) => {//longURL?   
   console.log("THIS IS /URLS/SHORT - GET")
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    user: users[req.cookies["userID"]]
-  };
+  if (!req.cookies["userID"]) {
+    return res.status(401).send('Please log in');
+  }
 
-  res.render("urls_show", templateVars);
+  if (Object.keys(urlsForUser(req.cookies["userID"])).includes(req.params.shortURL)) {
+    const templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      user: users[req.cookies["userID"]]
+    };
+
+    return res.render("urls_show", templateVars);
+  }
+
+  return res.status(401).send('Unauthorized');
+
 });
 
 
@@ -112,7 +144,7 @@ app.post("/urls", (req, res) => {
   console.log("THIS IS /URLS - POST")
   let short = generateRandomString();
   let long = req.body.longURL;    // http://www.google.com confirmed
-  urlDatabase[short] = { longURL: long, userID: "" }  //{ longURL: 'http://www.google.com', userID: '' }
+  urlDatabase[short] = { longURL: long, userID: req.cookies["userID"] }  //{ longURL: 'http://www.google.com', userID: '' }
   res.redirect(`/urls/${short}`);
 });
 
@@ -167,7 +199,7 @@ app.post("/urls/:shortURL", (req, res) => {
   console.log(shortURL); //9b4817 returns short confirmed
   const newURL = req.body.newurl; //name is important -----> newURL === long URL confirmed
   // console.log("new url:", newURL)
-  urlDatabase[shortURL] = { longURL: newURL, id: "" };
+  urlDatabase[shortURL].longURL = newURL;
   console.log("urlDatabase[shortURL", urlDatabase[shortURL]) // { longURL: 'www.google.com', id: '' }
   console.log(urlDatabase);
   res.redirect("/urls");
@@ -176,10 +208,18 @@ app.post("/urls/:shortURL", (req, res) => {
 
 //deleting a key-value pair from database
 app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
-  const urlToDelete = req.params.shortURL;
-  //access the object
-  delete urlDatabase[urlToDelete];
-  res.redirect("/urls");
+
+  if (!req.cookies["userID"]) {
+    return res.status(401).send('Please log in');
+  }
+
+  if (Object.keys(urlsForUser(req.cookies["userID"])).includes(req.params.shortURL)) {
+    const urlToDelete = req.params.shortURL;
+    //access the object
+    delete urlDatabase[urlToDelete];
+    res.redirect("/urls");
+  }
+
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
@@ -247,7 +287,7 @@ app.get("/login", (req, res) => {
 
 //////HELPER FUNCTION/////////////
 
-//RETURNS FALSE IF MATCH FOUND
+
 const checkEmailsMatch = (checkEmail, enteredPassword) => {
   for (let key in users) {
 

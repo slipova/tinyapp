@@ -16,6 +16,7 @@
     <!-- terminal is not happy during login, says urls is -->
     <%- include("partials/_header"); %>
   </header>
+
   <main style="margin: 1em;">
     <h3>My URLs</h3>
     <table class="table">
@@ -29,14 +30,14 @@
       </thead>
       <tbody>
         <% for(let short in urls) { %>
-          <!-- for (let short in urlDatabase) -->
+
           <tr>
             <td>
               <%= short %>
                 <!-- short -->
             </td>
             <td>
-              <%= urls[short]["longURL"] %>
+              <%= urls[short] %>
                 <!-- urlDatabase[short] -->
             </td>
             <td>
@@ -52,6 +53,7 @@
             </td>
           </tr>
           <% } %>
+
       </tbody>
     </table>
   </main>
