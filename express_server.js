@@ -18,6 +18,8 @@ app.use(cookieSession({
   keys: ["key1", "key2"]
 }));
 
+const { getUserByEmail, checkEmailsMatch } = require("./helpers");
+
 
 ////////////-+-+-+-+-+-+-+//////////////
 //           URL DATABASE             //
@@ -68,22 +70,22 @@ const generateRandomString = () => {
 };
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 //Check email (and password if needed) match with database
-const checkEmailsMatch = (enteredEmail, enteredPassword) => {
-  for (let key in users) {
+// const checkEmailsMatch = (enteredEmail, enteredPassword) => {
+//   for (let key in users) {
 
-    let existingEmail = users[key]["email"];
-    let hashedPassword = users[key]["password"];
+//     let existingEmail = users[key]["email"];
+//     let hashedPassword = users[key]["password"];
 
-    if (existingEmail === enteredEmail) {
-      if (enteredPassword === null) {
-        return true;
-      }
-      if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
-        return key;
-      }
-    }
-  }
-};
+//     if (existingEmail === enteredEmail) {
+//       if (enteredPassword === null) {
+//         return true;
+//       }
+//       if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
+//         return key;
+//       }
+//     }
+//   }
+// };
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 //RETURN user's URLs in an object
 const urlsForUser = (id) => {
@@ -100,15 +102,9 @@ const urlsForUser = (id) => {
   return userURLS;
 };
 
-const getUserByEmail = function(email, database) {
-  for (let user in database) {
-    if (database[user]["email"] === email) {
-      return user;
-    }
-  }
-};
 
-console.log(getUserByEmail("user@example.com", users))
+
+
 
 //------------------------------------------------------//
 //----------------------ROUTES--------------------------//
@@ -324,3 +320,5 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
+
+module.exports = { users }
