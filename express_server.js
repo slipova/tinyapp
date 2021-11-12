@@ -8,10 +8,15 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const e = require("express");
 const bcrypt = require("bcryptjs");
+// const cookieSession = require("cookie-session");
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+// app.use(cookieSession({
+//   name: "session",
+//   keys: [key1, key2]
+// }));
 
 
 //////CALLBACK hash passwords////////
@@ -56,12 +61,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "1234"
+    password: "$2a$10$Lq0f5Ba2MquQv/zRQ2yijeNDrIYpvVIW7gL1.KydJZLN6q4CdXn3q"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "2345"
+    password: "$2a$10$en8fRldKkuPpMtBtlEciUesHjUPlsH3FdbJR4fpzr5zIQ4s2JAz/i"
   }
 };
 //////////////////////////////////////////////////////
@@ -114,7 +119,6 @@ app.get("/hello", (req, res) => {
 //=-=-=-=-=-=-=-=-=-=-=-=-
 app.get("/urls", (req, res) => {
   // store variables in an object to be able to refer to them in the file - urls_index in this case
-  console.log("THIS IS /URLS - GET");
   if (!req.cookies["userID"]) {
     return res.status(400).send("You are not logged in");
   }
@@ -272,7 +276,9 @@ app.post("/register", (req, res) => {
     return res.status(400).send('Bad Request');
   } else {
     const userID = 'user' + generateRandomString();
-    users[userID] = { id: userID, email, password };
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    users[userID] = { id: userID, email, password: hashedPassword };
+    console.log(users[userID])
 
     res.cookie('userID', userID);
     res.redirect("/urls");
@@ -296,17 +302,17 @@ app.get("/login", (req, res) => {
 //////HELPER FUNCTION/////////////
 
 
-const checkEmailsMatch = (checkEmail, enteredPassword) => {
+const checkEmailsMatch = (enteredEmail, enteredPassword) => {
   for (let key in users) {
 
     let existingEmail = users[key]["email"];
-    let existingPassword = users[key]["password"];
+    let hashedPassword = users[key]["password"];
 
-    if (existingEmail === checkEmail) {
+    if (existingEmail === enteredEmail) {
       if (enteredPassword === null) {
         return true;
       }
-      if (existingPassword === enteredPassword) {
+      if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
         return key;
       }
     }
@@ -322,5 +328,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
-
-
