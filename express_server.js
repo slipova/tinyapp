@@ -19,11 +19,11 @@ app.use(cookieParser());
 
 const urlDatabase = {
   b6UTxQ: {
-    longURL: "https://www.tsn.ca",
+    longURL: "https://www.bfbdfodnfg.ca",
     userID: "userRandomID"
   },
   AAAxQ: {
-    longURL: "https://www.mmmmm.lo.tsn.ca",
+    longURL: "https://www.tsn.ca",
     userID: "user2RandomID"
   },
   i3BoGr: {
@@ -47,7 +47,7 @@ const users = {
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "2345"
   }
 };
 
@@ -92,7 +92,7 @@ app.get("/urls", (req, res) => {
   // store variables in an object to be able to refer to them in the file - urls_index in this case
   console.log("THIS IS /URLS - GET")
   if (!req.cookies["userID"]) {
-    res.status(400).send("You are not logged in");
+    return res.status(400).send("You are not logged in");
   }
   const userID = req.cookies["userID"]; //??? is it useful?
   const userObj = users[userID];
