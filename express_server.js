@@ -19,19 +19,6 @@ app.use(cookieSession({
 }));
 
 
-//////CALLBACK hash passwords////////
-//req.params[apssword]
-// const examplePass = "chgchgchgch";
-// const hashPassword = bcrypt.hashSync(examplePass, 10, (err, hash) => {
-//   console.log(hash);
-// })
-// hashPassword();
-
-// bcrypt.hash(password, 10, function(err, hash) {
-
-//   // Store hash in your password DB.
-// });
-
 ////////////-+-+-+-+-+-+-+//////////////
 //           URL DATABASE             //
 ////////////-+-+-+-+-+-+-+//////////////
@@ -69,6 +56,8 @@ const users = {
     password: "$2a$10$en8fRldKkuPpMtBtlEciUesHjUPlsH3FdbJR4fpzr5zIQ4s2JAz/i"
   }
 };
+
+
 //////////////////////////////////////////////////////
 ///////////////-+-+-+-FUNCTIONS-+-+-+-////////////////
 //////////////////////////////////////////////////////
@@ -78,11 +67,27 @@ const generateRandomString = () => {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 };
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+//Check email (and password if needed) match with database
+const checkEmailsMatch = (enteredEmail, enteredPassword) => {
+  for (let key in users) {
 
-//RETURN an user's URLs in an object
+    let existingEmail = users[key]["email"];
+    let hashedPassword = users[key]["password"];
+
+    if (existingEmail === enteredEmail) {
+      if (enteredPassword === null) {
+        return true;
+      }
+      if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
+        return key;
+      }
+    }
+  }
+};
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
+//RETURN user's URLs in an object
 const urlsForUser = (id) => {
   //  urlDatabase ---> shortURL ----> id
-  console.log('THIS IS A FUNCTION');
   let userURLS = {};
 
   for (let shortURL in urlDatabase) {
@@ -90,11 +95,20 @@ const urlsForUser = (id) => {
 
     if (user === id) {
       userURLS[shortURL] = urlDatabase[shortURL].longURL;
-      console.log(userURLS[shortURL]);
     }
   }
   return userURLS;
 };
+
+const getUserByEmail = function(email, database) {
+  for (let user in database) {
+    if (database[user]["email"] === email) {
+      return user;
+    }
+  }
+};
+
+console.log(getUserByEmail("user@example.com", users))
 
 //------------------------------------------------------//
 //----------------------ROUTES--------------------------//
@@ -119,13 +133,9 @@ app.get("/hello", (req, res) => {
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-
 app.get("/urls", (req, res) => {
-  console.log("users", users)
 
   const userID = req.session["userID"];
   const user = users[`${userID}`];
-  console.log("user: ", user);
-  // console.log("session userid", session_userID)
-  // store variables in an object to be able to refer to them in the file - urls_index in this case
   if (!user) {
     return res.status(400).send("You are not logged in");
   }
@@ -158,7 +168,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if (userID === null) {
     return res.status(401).send('Please log in');
   }
-  // create an array of shortURLS associated with the user and see if the link is in there
+  // array of shortURLS associated with a user -- is URL in there?
   if (Object.keys(urlsForUser(userID)).includes(req.params.shortURL)) {
     const templateVars = {
       shortURL: req.params.shortURL,
@@ -183,7 +193,6 @@ app.post("/urls", (req, res) => {
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//urls_show file uses the path
 app.get("/u/:shortURL", (req, res) => { //displaying new page
 
   if (urlDatabase[req.params.shortURL] === undefined) {
@@ -196,14 +205,11 @@ app.get("/u/:shortURL", (req, res) => { //displaying new page
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-
-
 app.post("/login", (req, res) => {
 
   const enteredEmail = req.body.emailaddress;
   const enteredPassword = req.body.password;
   let userID = checkEmailsMatch(enteredEmail, enteredPassword);
-  console.log("userID: ", userID)
 
   if (!userID) {
     return res.status(400).send('Bad Request');
@@ -244,7 +250,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
 //logout clear cookies?
-app.post("/logout", (req, res) => {  //handling request
+app.post("/logout", (req, res) => {
   req.session["userID"] = null;
 
   res.redirect("/urls");
@@ -286,7 +292,6 @@ app.post("/register", (req, res) => {
     const userID = 'user' + generateRandomString();
     const hashedPassword = bcrypt.hashSync(password, 10);
     users[userID] = { id: userID, email, password: hashedPassword };
-    console.log(users[userID])
 
     req.session["userID"] = userID;
 
@@ -309,25 +314,6 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-//////HELPER FUNCTION/////////////
-
-
-const checkEmailsMatch = (enteredEmail, enteredPassword) => {
-  for (let key in users) {
-
-    let existingEmail = users[key]["email"];
-    let hashedPassword = users[key]["password"];
-
-    if (existingEmail === enteredEmail) {
-      if (enteredPassword === null) {
-        return true;
-      }
-      if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
-        return key;
-      }
-    }
-  }
-};
 
 
 ///////////////////////////////////
