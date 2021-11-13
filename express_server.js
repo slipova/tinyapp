@@ -18,7 +18,8 @@ app.use(cookieSession({
   keys: ["key1", "key2"]
 }));
 
-const { getUserByEmail, checkEmailsMatch } = require("./helpers");
+//currently not in use
+const { getUserByEmail } = require("./helpers");
 
 
 ////////////-+-+-+-+-+-+-+//////////////
@@ -27,7 +28,7 @@ const { getUserByEmail, checkEmailsMatch } = require("./helpers");
 
 const urlDatabase = {
   b6UTxQ: {
-    longURL: "https://www.bfbdfodnfg.ca",
+    longURL: "https://www.https://www.lighthouselabs.ca",
     userID: "userRandomID"
   },
   AAAxQ: {
@@ -51,11 +52,13 @@ const users = {
     id: "userRandomID",
     email: "user@example.com",
     password: "$2a$10$Lq0f5Ba2MquQv/zRQ2yijeNDrIYpvVIW7gL1.KydJZLN6q4CdXn3q"
+    //1234
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "$2a$10$en8fRldKkuPpMtBtlEciUesHjUPlsH3FdbJR4fpzr5zIQ4s2JAz/i"
+    //2345
   }
 };
 
@@ -70,22 +73,22 @@ const generateRandomString = () => {
 };
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 //Check email (and password if needed) match with database
-// const checkEmailsMatch = (enteredEmail, enteredPassword) => {
-//   for (let key in users) {
+const checkEmailsMatch = (enteredEmail, enteredPassword) => {
+  for (let key in users) {
 
-//     let existingEmail = users[key]["email"];
-//     let hashedPassword = users[key]["password"];
+    let existingEmail = users[key]["email"];
+    let hashedPassword = users[key]["password"];
 
-//     if (existingEmail === enteredEmail) {
-//       if (enteredPassword === null) {
-//         return true;
-//       }
-//       if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
-//         return key;
-//       }
-//     }
-//   }
-// };
+    if (existingEmail === enteredEmail) {
+      if (enteredPassword === null) {
+        return true;
+      }
+      if (bcrypt.compareSync(enteredPassword, hashedPassword)) {
+        return key;
+      }
+    }
+  }
+};
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 //RETURN user's URLs in an object
 const urlsForUser = (id) => {
@@ -143,10 +146,10 @@ app.get("/urls", (req, res) => {
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//place before  app.get("/urls/:id", ...) ORDER MATTERS       ///USER_ID
+//place before  app.get("/urls/:id", ...) ORDER MATTERS
 app.get("/urls/new", (req, res) => {
   const userID = req.session["userID"];
-  if (userID === null) {
+  if (!userID) {
     return res.redirect("/login");
   }
   const templateVars = {
@@ -159,12 +162,12 @@ app.get("/urls/new", (req, res) => {
 
 //new URL
 app.get("/urls/:shortURL", (req, res) => {
-  const userID = req.session["userID"]
+  const userID = req.session["userID"];
 
   if (userID === null) {
     return res.status(401).send('Please log in');
   }
-  // array of shortURLS associated with a user -- is URL in there?
+
   if (Object.keys(urlsForUser(userID)).includes(req.params.shortURL)) {
     const templateVars = {
       shortURL: req.params.shortURL,
@@ -182,7 +185,7 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   let long = req.body.longURL;
-  const userID = req.session["userID"]
+  const userID = req.session["userID"];
   urlDatabase[short] = { longURL: long, userID };
   res.redirect(`/urls/${short}`);
 });
@@ -208,7 +211,7 @@ app.post("/login", (req, res) => {
   let userID = checkEmailsMatch(enteredEmail, enteredPassword);
 
   if (!userID) {
-    return res.status(400).send('Bad Request');
+    return res.status(400).send('User with these credentials is not found'); //change message
   }
 
   req.session["userID"] = userID;
@@ -218,7 +221,6 @@ app.post("/login", (req, res) => {
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
-//submit form from Tiny page
 app.post("/urls/:shortURL", (req, res) => {
 
   const shortURL = req.params.shortURL;
@@ -230,9 +232,9 @@ app.post("/urls/:shortURL", (req, res) => {
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 
 //deleting a key-value pair from database
-app.post("/urls/:shortURL/delete", (req, res) => {  //handling request
-  const userID = req.session["userID"]
-  if (userID === null) {
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const userID = req.session["userID"];
+  if (!userID) {
     return res.status(401).send('Please log in');
   }
   if (Object.keys(urlsForUser(userID)).includes(req.params.shortURL)) {
@@ -261,7 +263,7 @@ app.post("/logout", (req, res) => {
 
 //render registration page
 app.get("/register", (req, res) => {
-  const userID = req.session["userID"]
+  const userID = req.session["userID"];
   if (userID) {
     return res.redirect("/urls");
   }
@@ -280,10 +282,10 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   if (email.length === 0 || password.length === 0) {
-    return res.status(400).send('Bad Request');
+    return res.status(400).send('Bad Request. All fields must be completed');
   }
   if (checkEmailsMatch(email, null)) {
-    return res.status(400).send('Bad Request');
+    return res.status(400).send('Bad Request. This email address is already in use');
   } else {
     const userID = 'user' + generateRandomString();
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -299,7 +301,7 @@ app.post("/register", (req, res) => {
 
 
 app.get("/login", (req, res) => {
-  const userID = req.session["userID"]
+  const userID = req.session["userID"];
   if (userID) {
     return res.redirect("/urls");
   }
@@ -321,4 +323,4 @@ app.listen(PORT, () => {
 });
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//
 
-module.exports = { users }
+module.exports = { users };

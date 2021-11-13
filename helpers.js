@@ -1,4 +1,4 @@
-const { users } = require("./express_server")
+const { users } = require("./express_server");
 
 // GET USER BY EMAIL
 const getUserByEmail = function(email, database) {
@@ -11,4 +11,4 @@ const getUserByEmail = function(email, database) {
 
 
 
-module.exports = { getUserByEmail }
+module.exports = { getUserByEmail };

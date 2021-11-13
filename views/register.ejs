@@ -13,13 +13,18 @@
   <header>
     <%- include("partials/_header"); %>
   </header>
+  <h1>Register</h1>
   <form method="POST" action="/register">
 
-    <label for="email">Enter your email address : </label>
-    <input type="email" name="email">
+    <div>
+      <label for="email">Enter your email address : </label><br>
+      <input type="email" name="email">
+    </div>
 
-    <label for="password">Enter your password </label>
-    <input type="password" name="password">
+    <div>
+      <label for="password">Enter your password </label><br>
+      <input type="password" name="password">
+    </div><br>
 
     <button type="submit" name="register">Register</button>
 
